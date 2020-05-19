@@ -664,7 +664,7 @@ class UrlInputFragment :
             }
         }
 
-        if (!input.trim { it <= ' ' }.isEmpty()) {
+        if (input.trim { it <= ' ' }.isNotEmpty()) {
             handleCrashTrigger(input)
 
             ViewUtils.hideKeyboard(urlView)
@@ -743,20 +743,29 @@ class UrlInputFragment :
             session?.searchTerms = searchTerms
         }
 
-        val fragmentManager = requireActivity().supportFragmentManager
+        //
 
         // Replace all fragments with a fresh browser fragment. This means we either remove the
         // HomeFragment with an UrlInputFragment on top or an old BrowserFragment with an
         // UrlInputFragment.
-        val browserFragment = fragmentManager.findFragmentByTag(BrowserFragment.FRAGMENT_TAG)
+        //val browserFragment = fragmentManager.findFragmentByTag(BrowserFragment.FRAGMENT_TAG)
 
-        if (browserFragment != null && browserFragment is BrowserFragment && browserFragment.isVisible) {
+        //if (browserFragment != null && browserFragment is BrowserFragment && browserFragment.isVisible) {
             // Reuse existing visible fragment - in this case we know the user is already browsing.
             // The fragment might exist if we "erased" a browsing session, hence we need to check
             // for visibility in addition to existence.
-            browserFragment.loadUrl(url)
+
 
             // And this fragment can be removed again.
+        /*
+
+         */
+
+        val fragmentManager = requireActivity().supportFragmentManager
+
+        if (session != null) {
+            requireComponents.sessionUseCases.loadUrl(url, session)
+
             fragmentManager.beginTransaction()
                 .remove(this)
                 .commit()

@@ -12,14 +12,19 @@ import android.view.View
 import android.view.ViewGroup
 import android.webkit.WebView
 import mozilla.components.browser.session.Session
+import mozilla.components.concept.engine.EngineView
+import mozilla.components.feature.session.SessionFeature
+import mozilla.components.feature.session.SessionUseCases
+import mozilla.components.support.base.feature.ViewBoundFeatureWrapper
 
 import org.mozilla.focus.R
+import org.mozilla.focus.ext.components
+import org.mozilla.focus.ext.requireComponents
 import org.mozilla.focus.ext.savedWebViewState
 import org.mozilla.focus.ext.shouldRequestDesktopSite
 import org.mozilla.focus.locale.LocaleAwareFragment
 import org.mozilla.focus.locale.LocaleManager
 import org.mozilla.focus.utils.AppConstants
-import org.mozilla.focus.web.IWebView
 
 import java.util.Locale
 
@@ -28,7 +33,7 @@ import java.util.Locale
  */
 @Suppress("TooManyFunctions")
 abstract class WebFragment : LocaleAwareFragment() {
-    private var webViewInstance: IWebView? = null
+    // private var webViewInstance: IWebView? = null
     private var isWebViewAvailable: Boolean = false
 
     abstract val session: Session?
@@ -38,13 +43,15 @@ abstract class WebFragment : LocaleAwareFragment() {
      */
     abstract val initialUrl: String?
 
+    private val sessionFeature = ViewBoundFeatureWrapper<SessionFeature>()
+
     /**
      * Inflate a layout for this fragment. The layout needs to contain a view implementing IWebView
      * with the id set to "webview".
      */
     abstract fun inflateLayout(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View
 
-    abstract fun createCallback(): IWebView.Callback
+    // abstract fun createCallback(): IWebView.Callback
 
     /**
      * Adds ability to add methods to onCreateView without override because onCreateView is final.
@@ -54,14 +61,14 @@ abstract class WebFragment : LocaleAwareFragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val view = inflateLayout(inflater, container, savedInstanceState)
 
-        val actualWebView = view.findViewById<View>(R.id.webview)
-        webViewInstance = actualWebView as IWebView
+        // val actualWebView = view.findViewById<View>(R.id.webview)
+        // webViewInstance = actualWebView as IWebView
 
         isWebViewAvailable = true
-        webViewInstance!!.setCallback(createCallback())
+        // webViewInstance!!.setCallback(createCallback())
 
         session?.let {
-            webViewInstance!!.setRequestDesktop(it.shouldRequestDesktopSite)
+            // webViewInstance!!.setRequestDesktop(it.shouldRequestDesktopSite)
         }
 
         if (!AppConstants.isGeckoBuild) {
@@ -70,8 +77,25 @@ abstract class WebFragment : LocaleAwareFragment() {
             loadInitialUrl()
         }
 
+
+
         onCreateViewCalled()
         return view
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        sessionFeature.set(
+                feature = SessionFeature(
+                    requireComponents.sessionManager,
+                    SessionUseCases(requireComponents.sessionManager),
+                    view.findViewById<View>(R.id.webview) as EngineView,
+                    session?.id // TODO: Is this correct?
+                ),
+                owner = this,
+                view = view
+        )
+
+        // TODO: handle on back press - forward to feature
     }
 
     override fun applyLocale() {
@@ -96,16 +120,16 @@ abstract class WebFragment : LocaleAwareFragment() {
     override fun onPause() {
         val session = session
         if (session != null) {
-            webViewInstance!!.saveWebViewState(session)
+            // webViewInstance!!.saveWebViewState(session)
         }
 
-        webViewInstance!!.onPause()
+        // webViewInstance!!.onPause()
 
         super.onPause()
     }
 
     override fun onResume() {
-        webViewInstance!!.onResume()
+        // webViewInstance!!.onResume()
 
         if (AppConstants.isGeckoBuild) {
             restoreStateOrLoadUrl()
@@ -115,11 +139,13 @@ abstract class WebFragment : LocaleAwareFragment() {
     }
 
     override fun onDestroy() {
+        /*
         if (webViewInstance != null) {
             webViewInstance!!.setCallback(null)
             webViewInstance!!.destroy()
             webViewInstance = null
         }
+         */
 
         super.onDestroy()
     }
@@ -130,21 +156,26 @@ abstract class WebFragment : LocaleAwareFragment() {
         super.onDestroyView()
     }
 
+    /*
     protected fun getWebView(): IWebView? {
         return if (isWebViewAvailable) webViewInstance else null
     }
+    */
 
     private fun loadInitialUrl() {
         val session = session
         if (session == null || session.savedWebViewState == null) {
             val url = initialUrl
             if (!TextUtils.isEmpty(url)) {
-                webViewInstance!!.loadUrl(url)
+                // TODO: What?
+                // components.sessionManager.getOrCreateEngineSession(session).loadUrl()
+                // webViewInstance!!.loadUrl(url)
             }
         }
     }
 
     private fun restoreStateOrLoadUrl() {
+        /*
         val session = session
         if (session == null || session.savedWebViewState == null) {
             val url = initialUrl
@@ -154,5 +185,6 @@ abstract class WebFragment : LocaleAwareFragment() {
         } else {
             webViewInstance!!.restoreWebViewState(session)
         }
+         */
     }
 }

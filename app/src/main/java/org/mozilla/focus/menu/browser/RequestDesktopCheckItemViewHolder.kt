@@ -14,6 +14,7 @@ import org.mozilla.focus.telemetry.TelemetryWrapper
 import org.mozilla.focus.utils.UrlUtils
 
 import mozilla.components.support.utils.ThreadUtils
+import org.mozilla.focus.ext.requireComponents
 import org.mozilla.focus.ext.shouldRequestDesktopSite
 
 internal class RequestDesktopCheckItemViewHolder/* package */(
@@ -35,7 +36,9 @@ internal class RequestDesktopCheckItemViewHolder/* package */(
         // the switch change its state.
         ThreadUtils.postToMainThreadDelayed(Runnable {
             menu.dismiss()
-            fragment.loadUrl(UrlUtils.stripSchemeAndSubDomain(fragment.url))
+
+            val url = UrlUtils.stripSchemeAndSubDomain(fragment.url)
+            fragment.requireComponents.sessionUseCases.loadUrl(url)
         }, ANIMATION_DURATION)
     }
 
